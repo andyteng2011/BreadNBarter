@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="bnbApp">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="Bread N Barter">
+		<meta name="author" content="Andy Teng">
+		<link rel="shortcut icon" href="favicon.ico">
+		
+		<title>Bread N Barter</title>
+
+		<!-- Bootstrap core CSS -->
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+
+		<!-- Custom styles for this template -->
+		<style>
+		  /* app css stylesheet */
+		  body {
+			padding-top: 50px;
+		  }
+		  .starter-template {
+			padding: 40px 15px;
+			text-align: center;
+		  }
+		</style>
+
+		<!-- Just for debugging purposes. Don't actually copy this line! -->
+		<!--[if lt IE 9]><script src="../../docs-assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!--[if lt IE 9]>
+		  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+		  <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+		<![endif]-->
+	</head>
+	
+	<body>
+
+		<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container" ng-cloak>
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="#">Bread N Barter</a>
+				</div>
+				<div class="collapse navbar-collapse">
+					<ul id="navbar" class="nav navbar-nav">
+						<li id="find"><a href="index.html">Find Treasures</a></li>
+						<li id="trade" class="active"><a href="trade.html">Trade Your Treasure</a></li>
+					</ul>
+				</div><!--/.nav-collapse -->
+			</div>
+		</div>
+
+		<div class="container">
+			
+			<div class="starter-template">
+				<img src="logo.png" alt="Bread N Barter" style="max-width:50%; max-height:50%; height:auto; width: auto\9"/>
+				<br/><br/>
+			</div>
+			
+			<div ng-controller="BnbController">
+				<form class="form-horizontal">
+					<table align="center">
+						<tr>
+							<td>
+								<label for="bnb-name">Name</label>
+							</td>
+							<td>
+								<input id="bnb-name" type="text" class="form-control" placeholder="Name" ng-model="newBnbName"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label for="bnb-contact">Contact</label>
+							</td>
+							<td>
+								<input id="bnb-contact" type="text" class="form-control" placeholder="Contact" ng-model="newBnbContact"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label for="bnb-itemName">Item Name</label>
+							</td>
+							<td>
+								<input id="bnb-itemName" type="text" class="form-control" placeholder="Item Name" ng-model="newBnbItemName"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label for="bnb-remarks">Remarks</label>
+							</td>
+							<td>
+								<textarea id="bnb-remarks" class="form-control" placeholder="Tell the world about the item and what you want to trade!" rows="3" cols="40" maxlength="300" ng-model="newBnbRemarks"></textarea>
+								<div id="textarea_feedback" align="right"></div>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label for="bnb-itemPhoto">Item Photo</label>
+							</td>
+							<td>
+								<input id="bnb-itemPhoto" type="file" onchange="loadImageFileAsURL();"/>
+								<textarea id="textAreaFileContents" style="display:none"></textarea>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2">
+								<br/>
+								<button id="add-btn" class="btn btn-primary" ng-click="addBnb(newBnbName,newBnbContact,newBnbItemName,newBnbRemarks)">Trade your treasure now!</button>
+							</td>
+						</tr>
+					</table>
+				</form>
+			</div>
+		</div><!-- /.container -->
+
+
+		<!-- Bootstrap core JavaScript
+		================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular-route.js"></script>
+		<script src="//cdn.firebase.com/v0/firebase.js"></script>
+		<script src="//cdn.firebase.com/libs/angularfire/0.5.0/angularfire.min.js"></script>
+		<script>
+			$(document).ready(function() {
+				var text_max = 300;
+				$('#textarea_feedback').html(text_max + ' characters left...');
+
+				$('#bnb-remarks').keyup(function() {
+					var text_length = $('#bnb-remarks').val().length;
+					var text_remaining = text_max - text_length;
+
+					$('#textarea_feedback').html(text_remaining + ' characters left...');
+				});
+			});
+		</script>	
+		<script>
+			var bnbApp = angular.module('bnbApp', ['firebase']);
+
+			bnbApp.controller('BnbController', function($scope, $firebase) {
+				$scope.loaded = false;
+				  
+				var ref = new Firebase('https://andyteng.firebaseio.com/bnbs');
+				$scope.bnbs = $firebase(ref);
+				$scope.bnbs.$bind($scope, "bnbs");
+				
+				$scope.addBnb = function(name,contact,itemName,remarks) {
+					var itemPhoto = document.getElementById("textAreaFileContents").innerHTML;
+					if (name == '') {
+						alert("Please enter your name!");
+					} else if (contact == '') {
+						alert("Please enter your contact!");
+					} else if (itemName == '') {
+						alert("Please enter your item name!");
+					} else if (remarks == '') {
+						alert("Please enter your remarks!");
+					} else {
+						$scope.newBnbName = '';
+						$scope.newBnbContact = '';
+						$scope.newBnbItemName = '';
+						$scope.newBnbRemarks = '';
+						var id = generateID();
+						$scope.bnbs.$child(id).$set({
+							name: name,
+							contact: contact,
+							itemName: itemName,
+							remarks: remarks,
+							itemPhoto: itemPhoto,
+							id: id
+						});
+						alert("Your item has been posted!");
+						document.location.href = "index.html";
+					}
+				};
+				
+				// Random ID generator
+				function generateID() {
+					var chars, x, length = 10;
+					chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-=";
+					var name = [];
+					for (x = 0; x < length; x++) {
+						name.push(chars[Math.floor(Math.random() * chars.length)]);
+					}
+					var id = name.join('');
+					if ($scope.bnbs.$getIndex().indexOf(id) === -1) {
+						return id;
+					} else {
+						generateId();
+					}
+				}
+			});
+		</script>
+		<script>
+			function loadImageFileAsURL() {
+				var filesSelected = document.getElementById("bnb-itemPhoto").files;
+				if (filesSelected.length > 0) {
+					var fileToLoad = filesSelected[0];
+
+					var fileReader = new FileReader();
+
+					fileReader.onload = function(fileLoadedEvent)  {
+						var textAreaFileContents = document.getElementById("textAreaFileContents");
+						textAreaFileContents.innerHTML = fileLoadedEvent.target.result;
+					};
+
+					fileReader.readAsDataURL(fileToLoad);
+				}
+			}
+		</script>
+	</body>
+</html>
